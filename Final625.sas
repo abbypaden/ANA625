@@ -1,7 +1,7 @@
 *****************************************************************************************
-* SAS Program Name: SAS BRFSS 10 LSATISFY and INCOME2  
+* SAS Program Name: SAS BRFSS 10 LSATISFY and _INCOMG
 * The objective of this analysis is to investigate the association of responders reporting
-* satisfaction with life (LSATISFY) and income level (INCOME2) after controlling for quality 
+* satisfaction with life (LSATISFY) and income level (_INCOMG) after controlling for quality 
 * of age (AGE) and education level (EDUCA) in BRFSS 2010 responders who were 18-65 year olds.
 *****************************************************************************************;
 LIBNAME TRANSPRT XPORT '/folders/myshortcuts/brfss-2010/CDBRFS10.XPT';
@@ -18,8 +18,8 @@ DATA temp;
 	if SEX in (1) then gender = 1;
 	if SEX in (2) then gender = 0;
 	
-	if EDUCA in (1,2,3) then college = 0;
-	if EDUCA in (4,5,6) then college = 1;
+	if EDUCA in (1,2,3,4) then college = 0;
+	if EDUCA in (5,6) then college = 1;
 	
 	if (18<=age<35) then agecat = 1;
 	if (35<=age<50) then agecat = 2;
@@ -79,8 +79,8 @@ RUN;
 PROC LOGISTIC data=temp;
 	**table 3, multivariable logistic regression analysis;
 	title 'Table 3: Multivariable Logistic Regression';
-	class satisfied (ref='1') agecat (ref='1') income (ref='1') college (ref='0') gender (ref = '0') satisfied (ref='1') / param = ref;
-	model satisfied = income agecat college gender / lackfit;	
+	class satisfied (ref='1') agecat (ref='1') income (ref='1') college (ref='1') gender (ref = '1') satisfied (ref='1') / param = ref;
+	model satisfied = income agecat college gender income*college / lackfit;	
 RUN;
 
 PROC REG data=temp;
@@ -90,6 +90,23 @@ title 'Variance Inflation Factors';
 
 RUN;
 
+PROC LOGISTIC data=temp;
+	**table 3, multivariable logistic regression analysis;
+	title 'Table 4: Multivariable Logistic Regression minus college';
+	class satisfied (ref='1') agecat (ref='1') income (ref='1') /*college (ref='1')*/ gender (ref = '1') satisfied (ref='1') / param = ref;
+	model satisfied = income agecat /*college*/ gender / lackfit;	
+RUN;
 
+PROC LOGISTIC data=temp;
+	**table 3, multivariable logistic regression analysis;
+	title 'Table 4: Multivariable Logistic Regression minus gender';
+	class satisfied (ref='1') agecat (ref='1') income (ref='1') college (ref='1') /*gender (ref = '1')*/ satisfied (ref='1') / param = ref;
+	model satisfied = income agecat college /*gender*/ / lackfit;	
+RUN;
 
-
+PROC LOGISTIC data=temp;
+	**table 3, multivariable logistic regression analysis;
+	title 'Table 4: Multivariable Logistic Regression minus age';
+	class satisfied (ref='1') /*agecat (ref='1')*/ income (ref='1') college (ref='1') gender (ref = '1') satisfied (ref='1') / param = ref;
+	model satisfied = income /*agecat*/ college gender / lackfit;	
+RUN;
